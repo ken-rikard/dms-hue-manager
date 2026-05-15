@@ -361,52 +361,32 @@ Item {
         let syncedCount = 0;
 
         if (roomId) {
-            // Sync a single room — match lights by room ID
+            // Sync a single room by name using openhue set room
             const room = service.rooms.get(roomId);
             if (!room) {
                 console.warn(`${pluginId}: Room ${roomId} not found`);
                 return;
             }
             console.log(`${pluginId}: Syncing room "${room.name}" to accent colour ${accentColor}`);
-            let roomLightCount = 0;
-            service.lights.forEach(light => {
-                const matched = light.room && light.room.id === roomId;
-                console.log(`${pluginId}:   light="${light.name}" room_id=${light.room?.id} matched=${matched} colorCapable=${light.isColorCapable} on=${light.on}`);
-                if (matched && light.isColorCapable && light.on) {
-                    roomLightCount++;
-                    console.log(`${pluginId}:   -> would sync ${light.name}`);
-                    service.commands.applyEntityColor(light, accentColor);
-                    syncedCount++;
-                }
-            });
-            console.log(`${pluginId}:   total lights in room: ${roomLightCount}`);
+            service.commands.executeEntityCommand("setRoomAccent", room, ["--on", "--rgb", accentColor],
+                `Failed to set room ${room.name} colour`);
+            syncedCount = 1;
         } else {
-            // Sync filtered rooms or all rooms
-            console.log(`${pluginId}: Syncing colour-capable lights to accent colour ${accentColor}`);
+            console.log(`${pluginId}: Syncing rooms to accent colour ${accentColor}`);
             const filterRoomIds = service._syncRoomIds.size > 0 ? service._syncRoomIds : null;
+            const roomsToSync = filterRoomIds
+                ? Array.from(filterRoomIds).map(rid => service.rooms.get(rid)).filter(r => r)
+                : Array.from(service.rooms.values());
 
-            if (filterRoomIds) {
-                filterRoomIds.forEach(rid => {
-                    service.lights.forEach(light => {
-                        if (light.room && light.room.id === rid && light.isColorCapable && light.on) {
-                            service.commands.applyEntityColor(light, accentColor);
-                            syncedCount++;
-                        }
-                    });
-                });
-            } else {
-                service.lights.forEach(light => {
-                    console.log(`${pluginId}:   checking light="${light.name}" colorCapable=${light.isColorCapable} on=${light.on}`);
-                    if (light.isColorCapable && light.on) {
-                        console.log(`${pluginId}:   -> syncing ${light.name}`);
-                        service.commands.applyEntityColor(light, accentColor);
-                        syncedCount++;
-                    }
-                });
-            }
+            roomsToSync.forEach(room => {
+                console.log(`${pluginId}:   syncing room "${room.name}"`);
+                service.commands.executeEntityCommand("setRoomAccent", room, ["--on", "--rgb", accentColor],
+                    `Failed to set room ${room.name} colour`);
+                syncedCount++;
+            });
         }
 
-        console.log(`${pluginId}: Synced ${syncedCount} colour-capable lights to accent colour ${accentColor}`);
+        console.log(`${pluginId}: Synced ${syncedCount} room(s) to accent colour ${accentColor}`);
     }
 
     function setError(message) {
