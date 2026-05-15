@@ -344,6 +344,63 @@ Item {
         }
     }
 
+    property var _syncRoomIds: new Set()  // set of room IDs to sync; empty = all rooms
+
+    function syncAllToAccent(roomId) {
+        if (!service.isReady) {
+            console.warn(`${pluginId}: Cannot sync accent - service is not ready`);
+            return;
+        }
+
+        const accentColor = Theme.currentThemeData?.primary;
+        if (!accentColor) {
+            console.warn(`${pluginId}: Cannot sync accent - no accent colour available`);
+            return;
+        }
+
+        let syncedCount = 0;
+
+        if (roomId) {
+            // Sync a single room — match lights by room ID
+            const room = service.rooms.get(roomId);
+            if (!room) {
+                console.warn(`${pluginId}: Room ${roomId} not found`);
+                return;
+            }
+            console.log(`${pluginId}: Syncing room "${room.name}" to accent colour ${accentColor}`);
+            service.lights.forEach(light => {
+                if (light.room && light.room.id === roomId && light.isColorCapable && light.on) {
+                    service.commands.applyEntityColor(light, accentColor);
+                    syncedCount++;
+                }
+            });
+        } else {
+            // Sync filtered rooms or all rooms
+            console.log(`${pluginId}: Syncing colour-capable lights to accent colour ${accentColor}`);
+            const filterRoomIds = service._syncRoomIds.size > 0 ? service._syncRoomIds : null;
+
+            if (filterRoomIds) {
+                filterRoomIds.forEach(rid => {
+                    service.lights.forEach(light => {
+                        if (light.room && light.room.id === rid && light.isColorCapable && light.on) {
+                            service.commands.applyEntityColor(light, accentColor);
+                            syncedCount++;
+                        }
+                    });
+                });
+            } else {
+                service.lights.forEach(light => {
+                    if (light.isColorCapable && light.on) {
+                        service.commands.applyEntityColor(light, accentColor);
+                        syncedCount++;
+                    }
+                });
+            }
+        }
+
+        console.log(`${pluginId}: Synced ${syncedCount} colour-capable lights to accent colour ${accentColor}`);
+    }
+
     function setError(message) {
         console.error(`${pluginId}: ${message}`);
         service.isError = true;
