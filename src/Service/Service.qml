@@ -368,12 +368,18 @@ Item {
                 return;
             }
             console.log(`${pluginId}: Syncing room "${room.name}" to accent colour ${accentColor}`);
+            let roomLightCount = 0;
             service.lights.forEach(light => {
-                if (light.room && light.room.id === roomId && light.isColorCapable && light.on) {
+                const matched = light.room && light.room.id === roomId;
+                console.log(`${pluginId}:   light="${light.name}" room_id=${light.room?.id} matched=${matched} colorCapable=${light.isColorCapable} on=${light.on}`);
+                if (matched && light.isColorCapable && light.on) {
+                    roomLightCount++;
+                    console.log(`${pluginId}:   -> would sync ${light.name}`);
                     service.commands.applyEntityColor(light, accentColor);
                     syncedCount++;
                 }
             });
+            console.log(`${pluginId}:   total lights in room: ${roomLightCount}`);
         } else {
             // Sync filtered rooms or all rooms
             console.log(`${pluginId}: Syncing colour-capable lights to accent colour ${accentColor}`);
@@ -390,7 +396,9 @@ Item {
                 });
             } else {
                 service.lights.forEach(light => {
+                    console.log(`${pluginId}:   checking light="${light.name}" colorCapable=${light.isColorCapable} on=${light.on}`);
                     if (light.isColorCapable && light.on) {
+                        console.log(`${pluginId}:   -> syncing ${light.name}`);
                         service.commands.applyEntityColor(light, accentColor);
                         syncedCount++;
                     }
