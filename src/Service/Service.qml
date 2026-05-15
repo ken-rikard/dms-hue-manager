@@ -20,6 +20,9 @@ Item {
     property string jqPath: defaults.jqPath
     property bool useDeviceIcons: defaults.useDeviceIcons
 
+    // Read from PluginService settings, not a local property
+    readonly property bool autoSyncAccent: PluginService.loadPluginData(pluginId, "autoSyncAccent") ?? false
+
     property bool isReady: false
     property bool isError: false
     property string errorMessage: ""
@@ -45,7 +48,7 @@ Item {
         refresh: service.refresh
     }
 
-    Connections {
+Connections {
         target: Theme
 
         function onCurrentThemeDataChanged() {
@@ -182,6 +185,10 @@ Item {
         function onPluginDataChanged(pluginId) {
             if (pluginId === service.pluginId) {
                 service.loadSettings();
+                // autoSyncAccent is a readonly binding, so re-check it when data changes
+                if (PluginService.loadPluginData(service.pluginId, "autoSyncAccent") && service.isReady && Theme.currentThemeData?.primary) {
+                    service.syncAllToAccent();
+                }
             }
         }
     }
