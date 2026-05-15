@@ -45,6 +45,16 @@ Item {
         refresh: service.refresh
     }
 
+    Connections {
+        target: Theme
+
+        function onCurrentThemeDataChanged() {
+            if (service.autoSyncAccent && service.isReady && Theme.currentThemeData?.primary) {
+                service.syncAllToAccent();
+            }
+        }
+    }
+
     EventHandler {
         id: eventHandler
         service: service
