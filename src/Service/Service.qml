@@ -50,6 +50,37 @@ Item {
 
         function onCurrentThemeDataChanged() {
             if (service.autoSyncAccent && service.isReady && Theme.currentThemeData?.primary) {
+                console.log(`${pluginId}: Auto-sync triggered by theme data change`);
+                service.syncAllToAccent();
+            }
+        }
+
+        function onCurrentThemeChanged() {
+            if (service.autoSyncAccent && service.isReady) {
+                console.log(`${pluginId}: Auto-sync triggered by theme change to "${Theme.currentTheme}"`);
+                Qt.callLater(() => {
+                    if (Theme.currentThemeData?.primary) {
+                        service.syncAllToAccent();
+                    }
+                });
+            }
+        }
+
+        function onIsLightModeChanged() {
+            if (service.autoSyncAccent && service.isReady && Theme.currentThemeData?.primary) {
+                console.log(`${pluginId}: Auto-sync triggered by light mode change`);
+                service.syncAllToAccent();
+            }
+        }
+    }
+
+    // Also listen for matugen color generation completion
+    Connections {
+        target: Theme
+
+        function onMatugenCompleted(mode, result) {
+            if (service.autoSyncAccent && service.isReady && Theme.currentThemeData?.primary) {
+                console.log(`${pluginId}: Auto-sync triggered by matugen completion`);
                 service.syncAllToAccent();
             }
         }
