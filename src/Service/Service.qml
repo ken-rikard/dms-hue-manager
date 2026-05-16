@@ -440,35 +440,28 @@ Item {
             return;
         }
 
-        let syncedCount = 0;
-
         if (roomId) {
-            // Sync a single room by name using openhue set room
             const room = service.rooms.get(roomId);
+
             if (!room) {
                 console.warn(`${pluginId}: Room ${roomId} not found`);
                 return;
             }
-            console.log(`${pluginId}: Syncing room "${room.name}" to accent colour ${accentColor}`);
-            service.commands.executeEntityCommand("setRoomAccent", room, ["--on", "--rgb", accentColor],
-                `Failed to set room ${room.name} colour`);
-            syncedCount = 1;
+
+            room.setAccent(accentColor);
+            console.log(`${pluginId}: Synced room "${room.name}" to accent colour ${accentColor}`);
         } else {
-            console.log(`${pluginId}: Syncing rooms to accent colour ${accentColor}`);
-            const filterRoomIds = service._syncRoomIds.size > 0 ? service._syncRoomIds : null;
-            const roomsToSync = filterRoomIds
-                ? Array.from(filterRoomIds).map(rid => service.rooms.get(rid)).filter(r => r)
-                : Array.from(service.rooms.values());
+            const allRooms = Array.from(service.rooms.values());
+            const selectedRooms = Array.from(service._syncRoomIds).map(rId => service.rooms.get(rId)).filter(r => r);
+            const roomsToSync = service._syncRoomIds.size > 0 ? selectedRooms : allRooms;
 
             roomsToSync.forEach(room => {
                 console.log(`${pluginId}:   syncing room "${room.name}"`);
-                service.commands.executeEntityCommand("setRoomAccent", room, ["--on", "--rgb", accentColor],
-                    `Failed to set room ${room.name} colour`);
-                syncedCount++;
+                room.setAccent(accentColor);
             });
-        }
 
-        console.log(`${pluginId}: Synced ${syncedCount} room(s) to accent colour ${accentColor}`);
+            console.log(`${pluginId}: Synced ${roomsToSync.length} room(s) to accent colour ${accentColor}`);
+        }
     }
 
     function setError(message) {

@@ -52,6 +52,10 @@ QtObject {
         executeEntityCommand("setEntityTemperature", entity, ["--temperature", tempValue.toString()], `Failed to set ${entity.entityType} temperature ${entity.entityId}`);
     }
 
+    function applyRoomAccent(room, color) {
+        executeEntityCommand("setRoomAccent", room, ["--on", "--rgb", color], `Failed to set room ${room.name} colour`);
+    }
+
     function applyActivateScene(scene) {
         executeSceneCommand("activateScene", [scene.id], `Failed to activate scene ${scene.id}`);
     }
