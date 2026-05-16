@@ -126,7 +126,7 @@ PluginSettings {
 
             StyledText {
                 width: parent.width
-                text: "Choose which rooms to sync. Empty selection = all rooms."
+                text: "Choose which rooms to sync. All rooms are selected by default."
                 font.pixelSize: Theme.fontSizeSmall - 1
                 color: Theme.surfaceVariantText
                 wrapMode: Text.WordWrap
@@ -139,29 +139,15 @@ PluginSettings {
                     spacing: Theme.spacingS
                     anchors.left: parent.left
 
-                    CheckBox {
+CheckBox {
                         id: roomCheck
-                        checked: {
-                            const sel = HueService._syncRoomIds;
-                            return sel.size === 0 || sel.has(modelData.entityId);
-                        }
+                        checked: HueService._syncRoomIds.has(modelData.entityId)
                         onCheckedChanged: {
                             const sel = HueService._syncRoomIds;
                             if (checked) {
                                 sel.add(modelData.entityId);
                             } else {
-                                // When unchecking from "all rooms" state (empty set),
-                                // populate the set with all rooms except this one
-                                if (sel.size === 0) {
-                                    const allRooms = HueService.rooms.values();
-                                    for (const room of allRooms) {
-                                        if (room.entityId !== modelData.entityId) {
-                                            sel.add(room.entityId);
-                                        }
-                                    }
-                                } else {
-                                    sel.delete(modelData.entityId);
-                                }
+                                sel.delete(modelData.entityId);
                             }
                             HueService.saveSyncRoomIds();
                         }

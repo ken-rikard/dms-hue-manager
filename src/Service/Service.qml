@@ -236,6 +236,13 @@ Item {
             service._syncRoomIds = new Set(saved);
         } else {
             service._syncRoomIds = new Set();
+            // Fill with all current room IDs so checkboxes have explicit state
+            if (service.rooms.size > 0) {
+                for (const room of service.rooms.values()) {
+                    service._syncRoomIds.add(room.entityId);
+                }
+                service.saveSyncRoomIds();
+            }
         }
     }
 
@@ -348,6 +355,14 @@ Item {
             });
 
             service[property] = updatedEntities;
+
+            // After rooms are loaded, ensure _syncRoomIds is initialized
+            if (entityType === "room" && service._syncRoomIds.size === 0 && service.rooms.size > 0) {
+                for (const room of service.rooms.values()) {
+                    service._syncRoomIds.add(room.entityId);
+                }
+                service.saveSyncRoomIds();
+            }
         }, 100);
     }
 
