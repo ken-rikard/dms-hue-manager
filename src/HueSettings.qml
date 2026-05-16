@@ -7,6 +7,9 @@ import qs.Widgets
 PluginSettings {
     pluginId: "hueManager"
 
+    // Cache the room list so the Repeater only rebuilds when rooms actually change
+    property var roomList: Array.from(HueService.rooms.values())
+
     StyledText {
         width: parent.width
         text: "Hue Manager Settings"
@@ -130,7 +133,7 @@ PluginSettings {
             }
 
             Repeater {
-                model: Array.from(HueService.rooms.values())
+                model: roomList
 
                 delegate: Row {
                     spacing: Theme.spacingS
@@ -147,8 +150,20 @@ PluginSettings {
                             if (checked) {
                                 sel.add(modelData.entityId);
                             } else {
-                                sel.delete(modelData.entityId);
+                                // When unchecking from "all rooms" state (empty set),
+                                // populate the set with all rooms except this one
+                                if (sel.size === 0) {
+                                    const allRooms = HueService.rooms.values();
+                                    for (const room of allRooms) {
+                                        if (room.entityId !== modelData.entityId) {
+                                            sel.add(room.entityId);
+                                        }
+                                    }
+                                } else {
+                                    sel.delete(modelData.entityId);
+                                }
                             }
+                            HueService.saveSyncRoomIds();
                         }
                     }
 

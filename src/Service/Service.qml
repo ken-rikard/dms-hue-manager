@@ -48,7 +48,7 @@ Item {
         refresh: service.refresh
     }
 
-Connections {
+    Connections {
         target: Theme
 
         function onCurrentThemeDataChanged() {
@@ -61,6 +61,11 @@ Connections {
         function onCurrentThemeChanged() {
             if (service.autoSyncAccent && service.isReady) {
                 console.log(`${pluginId}: Auto-sync triggered by theme change to "${Theme.currentTheme}"`);
+                // Defer sync until the next event loop tick so that
+                // Theme.currentThemeData has finished updating.
+                // onCurrentThemeDataChanged fires separately, but when
+                // the theme name changes we need to wait for the new
+                // theme's colour data to be resolved before syncing.
                 Qt.callLater(() => {
                     if (Theme.currentThemeData?.primary) {
                         service.syncAllToAccent();
@@ -222,6 +227,20 @@ Connections {
         openHuePath = load("openHuePath");
         jqPath = load("jqPath");
         useDeviceIcons = load("useDeviceIcons");
+        loadSyncRoomIds();
+    }
+
+    function loadSyncRoomIds() {
+        const saved = PluginService.loadPluginData(pluginId, "syncRoomIds");
+        if (saved && Array.isArray(saved)) {
+            service._syncRoomIds = new Set(saved);
+        } else {
+            service._syncRoomIds = new Set();
+        }
+    }
+
+    function saveSyncRoomIds() {
+        PluginService.savePluginData(pluginId, "syncRoomIds", Array.from(service._syncRoomIds));
     }
 
     function checkDependencies(onComplete) {
