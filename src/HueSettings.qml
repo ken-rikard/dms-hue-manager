@@ -5,6 +5,7 @@ import qs.Modules.Plugins
 import qs.Widgets
 
 PluginSettings {
+    id: root
     pluginId: "hueManager"
 
     // Cache the room list so the Repeater only rebuilds when rooms actually change
@@ -133,21 +134,23 @@ PluginSettings {
             }
 
             Repeater {
-                model: roomList
+                model: root.roomList
 
                 delegate: Row {
+                    id: roomDelegate
+                    required property var modelData
+
                     spacing: Theme.spacingS
                     anchors.left: parent.left
 
-CheckBox {
+                    CheckBox {
                         id: roomCheck
-                        checked: HueService._syncRoomIds.has(modelData.entityId)
-                        onCheckedChanged: {
-                            const sel = HueService._syncRoomIds;
+                        Component.onCompleted: checked = HueService._syncRoomIds.has(roomDelegate.modelData.entityId)
+                        onClicked: {
                             if (checked) {
-                                sel.add(modelData.entityId);
+                                HueService._syncRoomIds.add(roomDelegate.modelData.entityId);
                             } else {
-                                sel.delete(modelData.entityId);
+                                HueService._syncRoomIds.delete(roomDelegate.modelData.entityId);
                             }
                             HueService.saveSyncRoomIds();
                         }
@@ -155,7 +158,7 @@ CheckBox {
 
                     StyledText {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.name
+                        text: roomDelegate.modelData.name
                         font.pixelSize: Theme.fontSizeSmall
                         color: Theme.surfaceText
                     }
@@ -188,7 +191,7 @@ CheckBox {
                         id: accentPreview
                         width: 32
                         height: 32
-                        radius: Theme.cornerRadiusSmall
+                        radius: Theme.cornerRadius
                         color: Theme.currentThemeData?.primary ?? "#42a5f5"
                         border.width: 1
                         border.color: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.2)
